@@ -1,0 +1,22 @@
+{
+  "name": "@chidiwilliams/sierpinski-hexagon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "yarn run build && gh-pages -d dist",
+    "dev": "parcel index.html",
+    "build": "parcel build index.html --public-url ."
+  },
+  "author": "Chidi Williams",
+  "license": "ISC",
+  "devDependencies": {
+    "parcel": "^1.12.4",
+    "gh-pages": "^2.2.0",
+    "parcel-plugin-ogimage": "^1.1.0",
+    "parcel-plugin-static-files-copy": "^2.3.1"
+  },
+  "dependencies": {
+    "konva": "^6.0.0"
+  }
+}
