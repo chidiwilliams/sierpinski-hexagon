@@ -25,10 +25,13 @@ import Konva from 'konva';
     })();
 
     function centroid(points) {
-      const n = points.length;
-      const x = points.reduce((acc, [x]) => acc + x, 0) / n;
-      const y = points.reduce((acc, [, y]) => acc + y, 0) / n;
-      return [x, y];
+      let totalX = 0;
+      let totalY = 0;
+      points.forEach(([x, y]) => {
+        totalX += x;
+        totalY += y;
+      });
+      return [totalX / points.length, totalY / points.length];
     }
 
     return { hexagon, centroid };
@@ -36,34 +39,38 @@ import Konva from 'konva';
 
   var graphics = (function () {
     let layer,
-      midX,
-      h,
-      midY,
-      radius,
+      canvasHeight,
+      canvasMidPointX,
+      canvasMidPointY,
+      hexagonRadius,
       dotTime = 75,
       triangleTime = 250,
-      totalNumDots = 1000;
+      totalNumDots = 1000,
+      hasStartedAnimation = false;
 
     function init() {
-      h = window.innerHeight;
-      const w = window.innerWidth;
+      canvasHeight = window.innerHeight;
+      const canvasWidth = window.innerWidth;
 
-      const container = document.querySelector('#container');
-      container.style.width = `${w}px`;
-      container.style.height = `${h}px`;
+      {
+        const container = document.querySelector('#container');
+        container.style.width = `${canvasWidth}px`;
+        container.style.height = `${canvasHeight}px`;
+      }
 
-      midX = w / 2;
-      midY = h / 2;
-      const shorterAxes = h < w ? h : w;
-      radius = 0.3 * shorterAxes;
+      canvasMidPointX = canvasWidth / 2;
+      canvasMidPointY = canvasHeight / 2;
 
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      {
+        const shorterCanvasAxis =
+          canvasHeight < canvasWidth ? canvasHeight : canvasWidth;
+        hexagonRadius = 0.3 * shorterCanvasAxis;
+      }
 
       const stage = new Konva.Stage({
         container: 'container',
-        width: width,
-        height: height,
+        width: canvasWidth,
+        height: canvasHeight,
       });
 
       layer = new Konva.Layer({
@@ -72,30 +79,35 @@ import Konva from 'konva';
       stage.add(layer);
 
       {
-        const hexagon = createHexagon(midX, midY, radius, 0);
-        let clickedStart;
-        hexagon.addEventListener('click', function (event) {
-          if (!clickedStart) {
-            clickedStart = true;
-            const { clientX, clientY } = event;
-            startDrawingPoints(clientX, clientY);
-          }
-        });
+        const hexagon = createHexagon(
+          canvasMidPointX,
+          canvasMidPointY,
+          hexagonRadius,
+          0,
+        );
+        hexagon.addEventListener('click', onClickHexagon);
       }
 
       {
-        const pathData = geometry.hexagon.path(radius);
+        const pathData = geometry.hexagon.path(hexagonRadius);
         const hexagon = createPath(
           pathData,
-          midX - radius,
-          midY - radius,
+          canvasMidPointX - hexagonRadius,
+          canvasMidPointY - hexagonRadius,
           '#ffffff',
         );
-
         animateHexagon(hexagon, 500, 750);
       }
 
       stage.draw();
+    }
+
+    function onClickHexagon(event) {
+      if (!hasStartedAnimation) {
+        hasStartedAnimation = true;
+        const { clientX, clientY } = event;
+        startDrawingPoints(clientX, clientY);
+      }
     }
 
     function animateHexagon(hexagon, delay, duration) {
@@ -175,7 +187,7 @@ import Konva from 'konva';
     }
 
     function startDrawingPoints(pointX, pointY) {
-      let text = createText(midX, h - 40, '0');
+      let text = createText(canvasMidPointX, canvasHeight - 40, '0');
 
       for (let i = 0; i < totalNumDots; i++) {
         {
@@ -186,8 +198,8 @@ import Konva from 'konva';
 
         const edge = geometry.hexagon.randomEdge();
         const edgePositions = edge
-          .map((v) => geometry.hexagon.vertexPositionByIndex(v, radius))
-          .map(([x, y]) => [x + midX, y + midY]);
+          .map((v) => geometry.hexagon.vertexPositionByIndex(v, hexagonRadius))
+          .map(([x, y]) => [x + canvasMidPointX, y + canvasMidPointY]);
 
         const vertex1 = [pointX, pointY];
         const [vertex2, vertex3] = edgePositions;
@@ -312,8 +324,24 @@ import Konva from 'konva';
       return { next, last };
     })();
 
-    return { init };
+    function update() {}
+
+    return { init, update };
   })();
 
-  graphics.init();
+  var animation = (function () {
+    function animate() {
+      graphics.update();
+      requestAnimationFrame(animate);
+    }
+
+    function start() {
+      graphics.init();
+      animate();
+    }
+
+    return { start };
+  })();
+
+  animation.start();
 })();
