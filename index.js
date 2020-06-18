@@ -152,8 +152,8 @@ import Konva from 'konva';
 
     // Draws all dots in the hexagon starting from [pointX, pointY].
     function animateDots(pointX, pointY) {
-      const maxNumDots = 2000;
-      let numDots = 0;
+      const maxNumDots = 10000;
+      let numDrawnDots = 0;
 
       // Delay before drawing the inner lines as a fraction of the
       // duration of an animation step. If this value is 0.5, for
@@ -164,7 +164,7 @@ import Konva from 'konva';
       let text = draw.text(
         canvasMidPointX - hexagonRadius,
         canvasMidPointY + hexagonRadius,
-        `${numDots} points`,
+        `${numDrawnDots} points`,
       );
       let currentDot = null;
       let triangle = null;
@@ -174,7 +174,7 @@ import Konva from 'konva';
 
       const animation = new Konva.Animation(
         (frame) => {
-          if (numDots == maxNumDots) {
+          if (numDrawnDots >= maxNumDots) {
             animation.stop();
             return;
           }
@@ -184,23 +184,34 @@ import Konva from 'konva';
             return false;
           }
 
-          const duration = getDuration(numDots);
+          const duration = getDuration(numDrawnDots);
           const fractionDone = (frame.time - lastStartTime) / duration;
           if (fractionDone > 1) {
             if (isDotTime) {
-              if (currentDot == null) currentDot = draw.dot(pointX, pointY);
+              let nDotsToDraw = Math.min(
+                Math.floor(fractionDone),
+                maxNumDots - numDrawnDots,
+              );
 
-              currentDot.opacity(1);
+              let vertex1, vertex2, vertex3, centroid;
+              for (let i = 0; i < nDotsToDraw; i++) {
+                if (currentDot == null) currentDot = draw.dot(pointX, pointY);
+                currentDot.opacity(1);
 
-              const vertex1 = [pointX, pointY];
-              const edge = geometry.hexagon.randomEdge();
-              const [vertex2, vertex3] = edge
-                .map((v) =>
-                  geometry.hexagon.vertexPositionByIndex(v, hexagonRadius),
-                )
-                .map(([x, y]) => [x + canvasMidPointX, y + canvasMidPointY]);
-              const trianglePoints = [vertex1, vertex2, vertex3];
-              const centroid = geometry.centroid(trianglePoints);
+                vertex1 = [pointX, pointY];
+                const edge = geometry.hexagon.randomEdge();
+                [vertex2, vertex3] = edge
+                  .map((v) =>
+                    geometry.hexagon.vertexPositionByIndex(v, hexagonRadius),
+                  )
+                  .map(([x, y]) => [x + canvasMidPointX, y + canvasMidPointY]);
+                const trianglePoints = [vertex1, vertex2, vertex3];
+                centroid = geometry.centroid(trianglePoints);
+
+                [pointX, pointY] = centroid;
+                numDrawnDots++;
+                currentDot = null;
+              }
 
               if (triangle != null) triangle.remove();
               if (line1 != null) line1.remove();
@@ -216,11 +227,9 @@ import Konva from 'konva';
               line3 = drawIncenterLine(vertex3, centroid);
               clearLineDashLength(line1, line2, line3);
 
-              [pointX, pointY] = centroid;
               lastStartTime = frame.time;
-              currentDot = null;
               isDotTime = false;
-              text.text(String(`${++numDots} points`));
+              text.text(String(`${numDrawnDots} points`));
               return;
             }
 
@@ -291,8 +300,8 @@ import Konva from 'konva';
     function getDuration(numDots) {
       const initialDuration = 400;
       const numDotsAtInitialDuration = 0;
-      const finalDuration = 1;
-      const numDotsAtFinalDuration = 30;
+      const finalDuration = 0.8;
+      const numDotsAtFinalDuration = 25;
 
       if (numDots < numDotsAtFinalDuration) {
         const grad =
