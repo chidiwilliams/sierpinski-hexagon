@@ -113,7 +113,6 @@ import Konva from 'konva';
       let text = createText(canvasMidPointX, canvasHeight - 40, numDots);
       let lastDot = null;
       let triangle = null;
-      let lastDuration = 500;
       let lastStartTime = null;
       let vertex1, vertex2, vertex3;
 
@@ -126,7 +125,8 @@ import Konva from 'konva';
             return false;
           }
 
-          const fractionDone = (frame.time - lastStartTime) / lastDuration;
+          const duration = getDuration(numDots);
+          const fractionDone = (frame.time - lastStartTime) / duration;
           if (fractionDone > 1) {
             if (isDotTime) {
               if (lastDot == null) lastDot = drawCircle(pointX, pointY);
@@ -184,6 +184,21 @@ import Konva from 'konva';
         [layer],
       );
       animation.start();
+    }
+
+    function getDuration(numDots) {
+      const initialDuration = 400;
+      const numDotsAtInitialDuration = 0;
+      const finalDuration = 1;
+      const numDotsAtFinalDuration = 50;
+
+      if (numDots < numDotsAtFinalDuration) {
+        const grad =
+          (finalDuration - initialDuration) /
+          (numDotsAtFinalDuration - numDotsAtInitialDuration);
+        return grad * numDots + initialDuration;
+      }
+      return finalDuration;
     }
 
     function drawCircle(x, y) {
