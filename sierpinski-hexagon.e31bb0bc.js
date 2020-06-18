@@ -11585,6 +11585,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       {
         var hexagon = draw.hexagon(canvasMidPointX, canvasMidPointY, hexagonRadius, 0);
         hexagon.addEventListener('click', onClickHexagon);
+        hexagon.addEventListener('tap', onClickHexagon);
       }
       {
         var pathData = geometry.hexagon.path(hexagonRadius);
@@ -11592,15 +11593,6 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         var _hexagon = draw.path(pathData, canvasMidPointX - hexagonRadius, canvasMidPointY - hexagonRadius, primaryColor);
 
         animateHexagon(_hexagon, 500, 750);
-      }
-      {
-        var text = draw.text(canvasMidPointX, 30, 'Sierpiński Hexagon', 20, 'bold');
-        text.offsetX(text.width() / 2);
-      }
-      {
-        var _text = draw.text(canvasMidPointX, 70, 'Please click anywhere inside the hexagon to begin');
-
-        _text.offsetX(_text.width() / 2);
       }
       stage.draw();
     }
@@ -11638,9 +11630,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     function onClickHexagon(event) {
       if (!hasStartedAnimation) {
         hasStartedAnimation = true;
-        var clientX = event.clientX,
-            clientY = event.clientY;
-        animateDots(clientX, clientY);
+        var pageX = event.pageX,
+            pageY = event.pageY;
+        animateDots(pageX, pageY);
       }
     } // Draws all dots in the hexagon starting from [pointX, pointY].
 
@@ -11653,7 +11645,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       // into the animation of the triangle.
 
       var innerLinesDelay = 0.5;
-      var text = draw.text(canvasMidPointX - hexagonRadius, canvasMidPointY + hexagonRadius, "".concat(numDrawnDots, " points"), 16);
+      var text = draw.text(canvasMidPointX - hexagonRadius, canvasMidPointY + hexagonRadius, "".concat(numDrawnDots, " points"));
       var currentDot = null;
       var triangle = null;
       var lastStartTime = null;
@@ -11836,15 +11828,12 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       }
 
       function text(x, y, content) {
-        var fontSize = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 16;
-        var fontStyle = arguments.length > 4 ? arguments[4] : undefined;
         var text = new _konva.default.Text({
           x: x,
           y: y,
           text: content,
-          fontSize: fontSize,
-          fill: primaryColor,
-          fontStyle: fontStyle
+          fontSize: 16,
+          fill: primaryColor
         });
         text.transformsEnabled('position');
         text.perfectDrawEnabled(false);
@@ -11924,7 +11913,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53826" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54331" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
