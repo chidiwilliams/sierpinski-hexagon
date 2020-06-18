@@ -8,17 +8,75 @@
     />
     <title>Sierpinski Hexagon</title>
 
+    <link rel="manifest" href="site.webmanifest" />
+
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="shortcut icon" type="image/ico" href="favicon.ico" />
+    <meta
+      name="description"
+      itemprop="description"
+      content="A simulation of a Sierpinski Hexagon made by plotting the centroids of equilateral triangles on the sides of a hexagon"
+    />
+    <meta itemprop="name" content="Sierpinski Hexagon" />
+    <meta itemprop="image" content="thumbnail.png" />
+
+    <!-- Facebook Open Graph -->
+    <meta property="og:title" content="Sierpinski Hexagon" />
+    <meta
+      property="og:description"
+      content="A 3D simulation of a Sierpinski Hexagon made by plotting the centroids of equilateral triangles on the sides of a hexagon"
+    />
+    <meta
+      property="og:url"
+      content="https://chidiwilliams.github.io/sierpinski-hexagon/"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="thumbnail.png" />
+    <meta property="og:site_name" content="Sierpinski Hexagon" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+
+    <link
+      rel="canonical"
+      href="https://chidiwilliams.github.io/sierpinski-hexagon/"
+    />
+
     <style>
       html,
       body {
         margin: 0;
         padding: 0;
         background: #000000;
-        cursor: pointer;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+          'Segoe UI Symbol';
+      }
+
+      header {
+        position: absolute;
+        color: #ffffff;
+        width: 100%;
+        text-align: center;
+        z-index: 1;
+      }
+
+      h1 {
+        font-size: 20px;
+        font-weight: bold;
+        margin-top: 35px;
+      }
+
+      p {
+        color: #bbbbbb;
       }
     </style>
   </head>
   <body>
+    <header>
+      <h1>Sierpiński Hexagon</h1>
+      <p>Click anywhere inside the hexagon to begin!</p>
+    </header>
     <div id="container" style="overflow: hidden; position: relative;"></div>
     <script src="./index.js"></script>
   </body>
