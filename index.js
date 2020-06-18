@@ -152,7 +152,7 @@ import Konva from 'konva';
 
     // Draws all dots in the hexagon starting from [pointX, pointY].
     function animateDots(pointX, pointY) {
-      const maxNumDots = 10000;
+      const maxNumDots = 20000;
       let numDrawnDots = 0;
 
       // Delay before drawing the inner lines as a fraction of the
@@ -300,7 +300,7 @@ import Konva from 'konva';
     function getDuration(numDots) {
       const initialDuration = 400;
       const numDotsAtInitialDuration = 0;
-      const finalDuration = 0.8;
+      const finalDuration = 0.3;
       const numDotsAtFinalDuration = 25;
 
       if (numDots < numDotsAtFinalDuration) {
