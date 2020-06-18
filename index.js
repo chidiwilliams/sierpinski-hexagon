@@ -157,6 +157,7 @@ import Konva from 'konva';
               isDotTime = false;
 
               text.text(String(++numDots));
+              text.offsetX(text.width() / 2);
               return;
             }
 
