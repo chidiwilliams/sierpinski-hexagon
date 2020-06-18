@@ -11593,6 +11593,15 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
         animateHexagon(_hexagon, 500, 750);
       }
+      {
+        var text = draw.text(canvasMidPointX, 30, 'Sierpiński Hexagon', 20, 'bold');
+        text.offsetX(text.width() / 2);
+      }
+      {
+        var _text = draw.text(canvasMidPointX, 70, 'Please click anywhere inside the hexagon to begin');
+
+        _text.offsetX(_text.width() / 2);
+      }
       stage.draw();
     }
 
@@ -11644,7 +11653,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       // into the animation of the triangle.
 
       var innerLinesDelay = 0.5;
-      var text = draw.text(canvasMidPointX - hexagonRadius, canvasMidPointY + hexagonRadius, "".concat(numDrawnDots, " points"));
+      var text = draw.text(canvasMidPointX - hexagonRadius, canvasMidPointY + hexagonRadius, "".concat(numDrawnDots, " points"), 16);
       var currentDot = null;
       var triangle = null;
       var lastStartTime = null;
@@ -11714,7 +11723,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
             clearLineDashLength(line1, line2, line3);
             lastStartTime = frame.time;
             isDotTime = false;
-            text.text(String("".concat(numDrawnDots, " points")));
+            text.text(String("".concat(numDrawnDots, " point").concat(numDrawnDots == 1 ? '' : 's')));
             return;
           }
 
@@ -11827,12 +11836,15 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       }
 
       function text(x, y, content) {
+        var fontSize = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 16;
+        var fontStyle = arguments.length > 4 ? arguments[4] : undefined;
         var text = new _konva.default.Text({
           x: x,
           y: y,
           text: content,
-          fontSize: 16,
-          fill: primaryColor
+          fontSize: fontSize,
+          fill: primaryColor,
+          fontStyle: fontStyle
         });
         text.transformsEnabled('position');
         text.perfectDrawEnabled(false);
@@ -11912,7 +11924,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51927" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53826" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
