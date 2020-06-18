@@ -43,9 +43,7 @@ import Konva from 'konva';
       canvasMidPointX,
       canvasMidPointY,
       hexagonRadius,
-      dotTime = 75,
-      triangleTime = 250,
-      totalNumDots = 1000,
+      stage,
       hasStartedAnimation = false;
 
     function init() {
@@ -67,7 +65,7 @@ import Konva from 'konva';
         hexagonRadius = 0.3 * shorterCanvasAxis;
       }
 
-      const stage = new Konva.Stage({
+      stage = new Konva.Stage({
         container: 'container',
         width: canvasWidth,
         height: canvasHeight,
@@ -94,7 +92,6 @@ import Konva from 'konva';
           pathData,
           canvasMidPointX - hexagonRadius,
           canvasMidPointY - hexagonRadius,
-          '#ffffff',
         );
         animateHexagon(hexagon, 500, 750);
       }
@@ -106,8 +103,95 @@ import Konva from 'konva';
       if (!hasStartedAnimation) {
         hasStartedAnimation = true;
         const { clientX, clientY } = event;
-        startDrawingPoints(clientX, clientY);
+        startAnimation(clientX, clientY);
       }
+    }
+
+    function startAnimation(pointX, pointY) {
+      let numDots = 0;
+
+      let text = createText(canvasMidPointX, canvasHeight - 40, numDots);
+      let lastDot = null;
+      let triangle = null;
+      let lastDuration = 500;
+      let lastStartTime = null;
+      let vertex1, vertex2, vertex3;
+
+      let isDotTime = true;
+
+      const animation = new Konva.Animation(
+        (frame) => {
+          if (lastStartTime == null) {
+            lastStartTime = frame.time;
+            return false;
+          }
+
+          const fractionDone = (frame.time - lastStartTime) / lastDuration;
+          if (fractionDone > 1) {
+            if (isDotTime) {
+              if (lastDot == null) lastDot = newDot(pointX, pointY);
+              lastDot.opacity(1);
+
+              vertex1 = [pointX, pointY];
+              const edge = geometry.hexagon.randomEdge();
+              [vertex2, vertex3] = edge
+                .map((v) =>
+                  geometry.hexagon.vertexPositionByIndex(v, hexagonRadius),
+                )
+                .map(([x, y]) => [x + canvasMidPointX, y + canvasMidPointY]);
+              const trianglePoints = [vertex1, vertex2, vertex3];
+              [pointX, pointY] = geometry.centroid(trianglePoints);
+
+              if (triangle != null) {
+                triangle.remove();
+              }
+
+              triangle = drawTriangle(vertex1, vertex2, vertex3);
+              const pathLen = triangle.getLength();
+              triangle.dash([0, pathLen]);
+              layer.add(triangle);
+
+              lastStartTime = frame.time;
+              lastDot = null;
+              isDotTime = false;
+
+              text.text(String(++numDots));
+              return;
+            }
+
+            lastStartTime = frame.time;
+            lastDot = null;
+            isDotTime = true;
+            return;
+          }
+
+          if (isDotTime) {
+            if (lastDot == null) {
+              lastDot = newDot(pointX, pointY);
+              return;
+            }
+            lastDot.opacity(fractionDone);
+          } else {
+            const pathLen = triangle.getLength();
+            const dashLen = fractionDone * pathLen;
+            triangle.dash([dashLen, pathLen - 2 * dashLen]);
+          }
+        },
+        [layer],
+      );
+      animation.start();
+    }
+
+    function newDot(x, y) {
+      const dot = new Konva.Circle({
+        radius: 1,
+        x: x,
+        y: y,
+        fill: '#ffffff',
+        opacity: 0,
+      });
+      layer.add(dot);
+      return dot;
     }
 
     function animateHexagon(hexagon, delay, duration) {
@@ -156,127 +240,20 @@ import Konva from 'konva';
         y,
         text: content,
         fontSize: 20,
-        fill: 'white',
+        fill: '#ffffff',
       });
-      text.offsetX(-text.width() / 2);
+      text.offsetX(text.width() / 2);
       text.offsetY(text.height() / 2);
       layer.add(text);
       return text;
     }
 
-    function animatePoint(point, delay, duration) {
-      let startTime;
-      const animation = new Konva.Animation(function (frame) {
-        if (frame.time > delay) {
-          if (startTime == null) {
-            startTime = frame.time;
-            return;
-          }
-          const fractionDone = (frame.time - startTime) / duration;
-          if (fractionDone > 1) {
-            point.opacity(1);
-            animation.stop();
-            return;
-          }
-          point.opacity(fractionDone);
-        } else {
-          return false;
-        }
-      }, layer);
-      animation.start();
-    }
-
-    function startDrawingPoints(pointX, pointY) {
-      let text = createText(canvasMidPointX, canvasHeight - 40, '0');
-
-      for (let i = 0; i < totalNumDots; i++) {
-        {
-          const point = drawPoint(pointX, pointY, 0);
-          const delay = delays.next(false);
-          animatePoint(point, delay, dotTime);
-        }
-
-        const edge = geometry.hexagon.randomEdge();
-        const edgePositions = edge
-          .map((v) => geometry.hexagon.vertexPositionByIndex(v, hexagonRadius))
-          .map(([x, y]) => [x + canvasMidPointX, y + canvasMidPointY]);
-
-        const vertex1 = [pointX, pointY];
-        const [vertex2, vertex3] = edgePositions;
-        const trianglePoints = [vertex1, vertex2, vertex3];
-
-        if (i < 20) {
-          const triangle = drawTriangle(vertex1, vertex2, vertex3);
-          const pathLen = triangle.getLength();
-          triangle.dash([0, pathLen]);
-          layer.add(triangle);
-          const delay = delays.next(true);
-          animateTriangle(triangle, delay, triangleTime, pathLen);
-        }
-
-        [pointX, pointY] = geometry.centroid(trianglePoints);
-
-        {
-          const delay = delays.next(true);
-          animateText(text, delay, String(i + 1));
-        }
-      }
-    }
-
-    function drawPoint(x, y, opacity) {
-      const point = new Konva.Circle({
-        radius: 1,
-        x,
-        y,
-        fill: '#ffffff',
-        opacity,
-      });
-      layer.add(point);
-      return point;
-    }
-
-    function animateText(textObj, delay, text) {
-      let changed = false;
-      const animation = new Konva.Animation(function (frame) {
-        if (frame.time > delay && !changed) {
-          textObj.text(text);
-          textObj.offsetX(textObj.width() / 2);
-          changed = true;
-        } else {
-          return false;
-        }
-      }, layer);
-      animation.start();
-    }
-
-    function animateTriangle(triangle, delay, duration, pathLen) {
-      let startTime;
-      const animation = new Konva.Animation(function (frame) {
-        if (frame.time > delay) {
-          if (startTime == null) {
-            startTime = frame.time;
-            return;
-          }
-          const fractionDone = (frame.time - startTime) / duration;
-          if (fractionDone > 1) {
-            animation.stop();
-            return;
-          }
-          const dashLen = fractionDone * pathLen;
-          triangle.dash([dashLen, pathLen - 2 * dashLen]);
-        } else {
-          return false;
-        }
-      }, layer);
-      animation.start();
-    }
-
-    function createPath(data, x, y, stroke) {
+    function createPath(data, x, y) {
       const path = new Konva.Path({
         data,
         x,
         y,
-        stroke: stroke,
+        stroke: '#ffffff',
       });
       path.transformsEnabled('position');
       layer.add(path);
@@ -286,62 +263,14 @@ import Konva from 'konva';
     function drawTriangle(x, y, z) {
       const triangle = new Konva.Path({
         data: `M ${x[0]},${x[1]} ${y[0]},${y[1]} ${z[0]},${z[1]} ${x[0]},${x[1]}`,
-        stroke: '#ddaa0033',
+        stroke: '#ddaa0099',
       });
       triangle.transformsEnabled('position');
       return triangle;
     }
 
-    var delays = (function () {
-      let l = 0;
-      let numDots = 0;
-      const triangleTime = 250;
-
-      function getDotTime() {
-        if (numDots < 40) {
-          return dotTime;
-        }
-        if (dotTime < 100) {
-          return dotTime / 2;
-        }
-        return dotTime / 5;
-      }
-
-      function next(triangle) {
-        if (triangle) {
-          l += triangleTime;
-        } else {
-          l += getDotTime();
-          numDots++;
-        }
-        return l;
-      }
-
-      function last() {
-        return l;
-      }
-
-      return { next, last };
-    })();
-
-    function update() {}
-
-    return { init, update };
+    return { init };
   })();
 
-  var animation = (function () {
-    function animate() {
-      graphics.update();
-      requestAnimationFrame(animate);
-    }
-
-    function start() {
-      graphics.init();
-      animate();
-    }
-
-    return { start };
-  })();
-
-  animation.start();
+  graphics.init();
 })();
