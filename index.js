@@ -1,7 +1,7 @@
 import Konva from 'konva';
 
 (function () {
-  var geometry = (function () {
+  const geometry = (function () {
     var hexagon = (function () {
       // Returns a random pair of adjacent vertices.
       function randomEdge() {
@@ -28,6 +28,10 @@ import Konva from 'konva';
       return { randomEdge, vertexPositionByIndex, path };
     })();
 
+    function linePath(point1, point2) {
+      return `M ${point1[0]},${point1[1]} ${point2[0]},${point2[1]}`;
+    }
+
     // Returns the position of the centroid of the given points.
     function centroid(points) {
       let totalX = 0;
@@ -39,10 +43,13 @@ import Konva from 'konva';
       return [totalX / points.length, totalY / points.length];
     }
 
-    return { hexagon, centroid };
+    return { hexagon, centroid, linePath };
   })();
 
-  var graphics = (function () {
+  const graphics = (function () {
+    const primaryColor = '#ffffff';
+    const secondaryColor = '#dd7700';
+
     let layer,
       canvasHeight,
       canvasMidPointX,
@@ -98,6 +105,7 @@ import Konva from 'konva';
           pathData,
           canvasMidPointX - hexagonRadius,
           canvasMidPointY - hexagonRadius,
+          primaryColor,
         );
         animateHexagon(hexagon, 500, 750);
       }
@@ -105,24 +113,60 @@ import Konva from 'konva';
       stage.draw();
     }
 
+    function animateHexagon(hexagon, delay, duration) {
+      // Sets the hexagon's dash outline to full length and offsets it to full length.
+      // Effectively removes the full outline.
+      const length = hexagon.getLength();
+      hexagon.dashOffset(length);
+      hexagon.dash([length]);
+
+      let startTime = null;
+      const animation = new Konva.Animation(function (frame) {
+        if (frame.time > delay) {
+          if (startTime == null) {
+            startTime = frame.time;
+            return false;
+          }
+          const fractionDone = (frame.time - startTime) / duration;
+          if (fractionDone > 1) {
+            updateLineDashLength(1, hexagon);
+            animation.stop();
+            return;
+          }
+
+          updateLineDashLength(fractionDone, hexagon);
+        } else {
+          return false;
+        }
+      }, layer);
+      animation.start();
+    }
+
     function onClickHexagon(event) {
       if (!hasStartedAnimation) {
         hasStartedAnimation = true;
         const { clientX, clientY } = event;
-        startAnimation(clientX, clientY);
+        animateDots(clientX, clientY);
       }
     }
 
     // Draws all dots in the hexagon starting from [pointX, pointY].
-    function startAnimation(pointX, pointY) {
-      const maxNumDots = 1000;
+    function animateDots(pointX, pointY) {
+      const maxNumDots = 2000;
       let numDots = 0;
+
+      // Delay before drawing the inner lines as a fraction of the
+      // duration of an animation step. If this value is 0.5, for
+      // example, the inner lines to the centroid are drawn halfway
+      // into the animation of the triangle.
+      const innerLinesDelay = 0.5;
 
       let text = draw.text(canvasMidPointX, canvasHeight - 40, numDots);
       let currentDot = null;
       let triangle = null;
       let lastStartTime = null;
       let isDotTime = true;
+      let line1, line2, line3;
 
       const animation = new Konva.Animation(
         (frame) => {
@@ -152,17 +196,23 @@ import Konva from 'konva';
                 )
                 .map(([x, y]) => [x + canvasMidPointX, y + canvasMidPointY]);
               const trianglePoints = [vertex1, vertex2, vertex3];
-              [pointX, pointY] = geometry.centroid(trianglePoints);
+              const centroid = geometry.centroid(trianglePoints);
 
-              if (triangle != null) {
-                triangle.remove();
-              }
+              if (triangle != null) triangle.remove();
+              if (line1 != null) line1.remove();
+              if (line2 != null) line2.remove();
+              if (line3 != null) line3.remove();
 
               triangle = draw.triangle(vertex1, vertex2, vertex3);
-              const pathLen = triangle.getLength();
-              triangle.dash([0, pathLen]);
+              clearTriangleDashLength(triangle);
               layer.add(triangle);
 
+              line1 = drawIncenterLine(vertex1, centroid);
+              line2 = drawIncenterLine(vertex2, centroid);
+              line3 = drawIncenterLine(vertex3, centroid);
+              clearLineDashLength(line1, line2, line3);
+
+              [pointX, pointY] = centroid;
               lastStartTime = frame.time;
               currentDot = null;
               isDotTime = false;
@@ -173,6 +223,7 @@ import Konva from 'konva';
             }
 
             triangle.dash([]);
+            updateLineDashLength(1, line1, line2, line3);
 
             lastStartTime = frame.time;
             currentDot = null;
@@ -187,14 +238,50 @@ import Konva from 'konva';
             }
             currentDot.opacity(fractionDone);
           } else {
-            const pathLen = triangle.getLength();
-            const dashLen = fractionDone * pathLen;
-            triangle.dash([dashLen, pathLen - 2 * dashLen]);
+            updateTriangleDashLength(fractionDone, triangle);
+
+            if (fractionDone > innerLinesDelay) {
+              const lineFractionDone =
+                (fractionDone - innerLinesDelay) / innerLinesDelay;
+              updateLineDashLength(lineFractionDone, line1, line2, line3);
+            }
           }
         },
         [layer],
       );
       animation.start();
+    }
+
+    function clearLineDashLength(...objects) {
+      objects.forEach((object) => {
+        const length = object.getLength();
+        object.dashOffset(length);
+        object.dash([length]);
+      });
+    }
+
+    // Reduce the dash offset based on animation progress
+    function updateLineDashLength(fractionDone, ...lines) {
+      lines.forEach((line) => {
+        const len = line.getLength();
+        const dashLen = len - fractionDone * len;
+        line.dashOffset(dashLen);
+      });
+    }
+
+    function updateTriangleDashLength(fractionDone, triangle) {
+      const pathLen = triangle.getLength();
+      const dashLen = fractionDone * pathLen;
+      triangle.dash([dashLen, pathLen - 2 * dashLen]);
+    }
+
+    function clearTriangleDashLength(object) {
+      const pathLen = object.getLength();
+      object.dash([0, pathLen]);
+    }
+
+    function drawIncenterLine(point1, point2) {
+      return draw.path(geometry.linePath(point1, point2), 0, 0, secondaryColor);
     }
 
     // Returns the duration of the next animation
@@ -214,56 +301,24 @@ import Konva from 'konva';
       return finalDuration;
     }
 
-    function animateHexagon(hexagon, delay, duration) {
-      // Sets the hexagon's dash outline to full length and offsets it to full length.
-      // Effectively removes the full outline.
-      const length = hexagon.getLength();
-      hexagon.dashOffset(length);
-      hexagon.dash([length]);
-
-      let startTime = null;
-      const animation = new Konva.Animation(function (frame) {
-        if (frame.time > delay) {
-          if (startTime == null) {
-            startTime = frame.time;
-            return false;
-          }
-          const fractionDone = (frame.time - startTime) / duration;
-          if (fractionDone > 1) {
-            // Completely remove the offset. Resets the outline to full length.
-            hexagon.dashOffset(0);
-            animation.stop();
-            return;
-          }
-
-          // Reduce the dash offset based on animation progress
-          const dashLen = length - fractionDone * length;
-          hexagon.dashOffset(dashLen);
-        } else {
-          return false;
-        }
-      }, layer);
-      animation.start();
-    }
-
     // Functions for creating new objects. Some add the object to layer.
     var draw = (function () {
       function triangle(x, y, z) {
         const triangle = new Konva.Path({
           data: `M ${x[0]},${x[1]} ${y[0]},${y[1]} ${z[0]},${z[1]} ${x[0]},${x[1]}`,
-          stroke: '#ddaa0099',
+          stroke: secondaryColor,
         });
         triangle.transformsEnabled('position');
         triangle.perfectDrawEnabled(false);
         return triangle;
       }
 
-      function path(data, x, y) {
+      function path(data, x, y, strokeColor) {
         const path = new Konva.Path({
           data,
           x,
           y,
-          stroke: '#ffffff',
+          stroke: strokeColor,
         });
         path.transformsEnabled('position');
         path.perfectDrawEnabled(false);
@@ -277,7 +332,7 @@ import Konva from 'konva';
           y,
           text: content,
           fontSize: 20,
-          fill: '#ffffff',
+          fill: primaryColor,
         });
         text.offsetX(text.width() / 2);
         text.offsetY(text.height() / 2);
@@ -306,7 +361,7 @@ import Konva from 'konva';
           radius: 1,
           x: x,
           y: y,
-          fill: '#ffffff',
+          fill: primaryColor,
           opacity: 0,
         });
         dot.perfectDrawEnabled(false);
