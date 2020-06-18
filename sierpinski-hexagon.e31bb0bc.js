@@ -11645,7 +11645,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       // into the animation of the triangle.
 
       var innerLinesDelay = 0.5;
-      var text = draw.text(canvasMidPointX - hexagonRadius, canvasMidPointY + hexagonRadius, "".concat(numDrawnDots, " points"));
+      var text = draw.text(canvasMidPointX, canvasMidPointY + hexagonRadius + 30, "".concat(numDrawnDots, " points"));
       var currentDot = null;
       var triangle = null;
       var lastStartTime = null;
@@ -11716,6 +11716,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
             lastStartTime = frame.time;
             isDotTime = false;
             text.text(String("".concat(numDrawnDots, " point").concat(numDrawnDots == 1 ? '' : 's')));
+            text.offsetX(text.width() / 2);
             return;
           }
 
