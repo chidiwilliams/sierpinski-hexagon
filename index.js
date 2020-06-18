@@ -97,6 +97,7 @@ import Konva from 'konva';
           0,
         );
         hexagon.addEventListener('click', onClickHexagon);
+        hexagon.addEventListener('tap', onClickHexagon);
       }
 
       {
@@ -145,8 +146,8 @@ import Konva from 'konva';
     function onClickHexagon(event) {
       if (!hasStartedAnimation) {
         hasStartedAnimation = true;
-        const { clientX, clientY } = event;
-        animateDots(clientX, clientY);
+        const { pageX, pageY } = event;
+        animateDots(pageX, pageY);
       }
     }
 
@@ -229,7 +230,9 @@ import Konva from 'konva';
 
               lastStartTime = frame.time;
               isDotTime = false;
-              text.text(String(`${numDrawnDots} points`));
+              text.text(
+                String(`${numDrawnDots} point${numDrawnDots == 1 ? '' : 's'}`),
+              );
               return;
             }
 
