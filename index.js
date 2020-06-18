@@ -163,8 +163,8 @@ import Konva from 'konva';
       const innerLinesDelay = 0.5;
 
       let text = draw.text(
-        canvasMidPointX - hexagonRadius,
-        canvasMidPointY + hexagonRadius,
+        canvasMidPointX,
+        canvasMidPointY + hexagonRadius + 30,
         `${numDrawnDots} points`,
       );
       let currentDot = null;
@@ -233,6 +233,7 @@ import Konva from 'konva';
               text.text(
                 String(`${numDrawnDots} point${numDrawnDots == 1 ? '' : 's'}`),
               );
+              text.offsetX(text.width() / 2);
               return;
             }
 
