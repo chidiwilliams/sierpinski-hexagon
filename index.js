@@ -129,7 +129,8 @@ import Konva from 'konva';
           const fractionDone = (frame.time - lastStartTime) / lastDuration;
           if (fractionDone > 1) {
             if (isDotTime) {
-              if (lastDot == null) lastDot = newDot(pointX, pointY);
+              if (lastDot == null) lastDot = drawCircle(pointX, pointY);
+
               lastDot.opacity(1);
 
               vertex1 = [pointX, pointY];
@@ -159,6 +160,8 @@ import Konva from 'konva';
               return;
             }
 
+            triangle.dash([]);
+
             lastStartTime = frame.time;
             lastDot = null;
             isDotTime = true;
@@ -167,7 +170,7 @@ import Konva from 'konva';
 
           if (isDotTime) {
             if (lastDot == null) {
-              lastDot = newDot(pointX, pointY);
+              lastDot = drawCircle(pointX, pointY);
               return;
             }
             lastDot.opacity(fractionDone);
@@ -182,7 +185,7 @@ import Konva from 'konva';
       animation.start();
     }
 
-    function newDot(x, y) {
+    function drawCircle(x, y) {
       const dot = new Konva.Circle({
         radius: 1,
         x: x,
