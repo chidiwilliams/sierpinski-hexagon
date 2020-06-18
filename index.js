@@ -161,7 +161,11 @@ import Konva from 'konva';
       // into the animation of the triangle.
       const innerLinesDelay = 0.5;
 
-      let text = draw.text(canvasMidPointX, canvasHeight - 40, numDots);
+      let text = draw.text(
+        canvasMidPointX - hexagonRadius,
+        canvasMidPointY + hexagonRadius,
+        `${numDots} points`,
+      );
       let currentDot = null;
       let triangle = null;
       let lastStartTime = null;
@@ -216,9 +220,7 @@ import Konva from 'konva';
               lastStartTime = frame.time;
               currentDot = null;
               isDotTime = false;
-
-              text.text(String(++numDots));
-              text.offsetX(text.width() / 2);
+              text.text(String(`${++numDots} points`));
               return;
             }
 
@@ -290,7 +292,7 @@ import Konva from 'konva';
       const initialDuration = 400;
       const numDotsAtInitialDuration = 0;
       const finalDuration = 1;
-      const numDotsAtFinalDuration = 50;
+      const numDotsAtFinalDuration = 30;
 
       if (numDots < numDotsAtFinalDuration) {
         const grad =
@@ -331,11 +333,9 @@ import Konva from 'konva';
           x,
           y,
           text: content,
-          fontSize: 20,
+          fontSize: 16,
           fill: primaryColor,
         });
-        text.offsetX(text.width() / 2);
-        text.offsetY(text.height() / 2);
         text.transformsEnabled('position');
         text.perfectDrawEnabled(false);
         layer.add(text);
