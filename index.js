@@ -96,8 +96,8 @@ import Konva from 'konva';
           hexagonRadius,
           0,
         );
-        hexagon.addEventListener('click', onClickHexagon);
-        hexagon.addEventListener('tap', onClickHexagon);
+        hexagon.addEventListener('mouseup', onTapOrClickHexagon);
+        hexagon.addEventListener('touchend', onTapOrClickHexagon);
       }
 
       {
@@ -143,11 +143,22 @@ import Konva from 'konva';
       animation.start();
     }
 
-    function onClickHexagon(event) {
+    function onTapOrClickHexagon(event) {
+      event.preventDefault();
+
       if (!hasStartedAnimation) {
         hasStartedAnimation = true;
-        const { pageX, pageY } = event;
-        animateDots(pageX, pageY);
+
+        let pointX, pointY;
+        if (event.type == 'touchend') {
+          pointX = event.changedTouches[0].pageX;
+          pointY = event.changedTouches[0].pageY;
+        } else {
+          pointX = event.pageX;
+          pointY = event.pageY;
+        }
+
+        animateDots(pointX, pointY);
       }
     }
 
