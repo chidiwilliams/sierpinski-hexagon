@@ -11584,8 +11584,8 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       stage.add(layer);
       {
         var hexagon = draw.hexagon(canvasMidPointX, canvasMidPointY, hexagonRadius, 0);
-        hexagon.addEventListener('click', onClickHexagon);
-        hexagon.addEventListener('tap', onClickHexagon);
+        hexagon.addEventListener('mouseup', onTapOrClickHexagon);
+        hexagon.addEventListener('touchend', onTapOrClickHexagon);
       }
       {
         var pathData = geometry.hexagon.path(hexagonRadius);
@@ -11627,12 +11627,22 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       animation.start();
     }
 
-    function onClickHexagon(event) {
+    function onTapOrClickHexagon(event) {
+      event.preventDefault();
+
       if (!hasStartedAnimation) {
         hasStartedAnimation = true;
-        var pageX = event.pageX,
-            pageY = event.pageY;
-        animateDots(pageX, pageY);
+        var pointX, pointY;
+
+        if (event.type == 'touchend') {
+          pointX = event.changedTouches[0].pageX;
+          pointY = event.changedTouches[0].pageY;
+        } else {
+          pointX = event.pageX;
+          pointY = event.pageY;
+        }
+
+        animateDots(pointX, pointY);
       }
     } // Draws all dots in the hexagon starting from [pointX, pointY].
 
@@ -11914,7 +11924,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59538" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57274" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
